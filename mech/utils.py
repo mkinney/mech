@@ -40,6 +40,7 @@ import tempfile
 import textwrap
 import subprocess
 import collections
+import jinja2
 from shutil import copyfile
 
 import requests
@@ -467,6 +468,7 @@ def add_box_url(name, box, box_version, url, force=False, save=True):
             except KeyError:
                 progress_args = dict(every=1024 * 100)
                 progress_type = progress.dots
+
             the_file = tempfile.NamedTemporaryFile(delete=False)
             try:
                 for chunk in progress_type(
@@ -790,6 +792,8 @@ def provision(instance, show=False):
     if instance.provision:
         for i, pro in enumerate(instance.provision):
             provision_type = pro.get('type')
+            template = pro.get('template')
+            template_args = pro.get('template_args') or {}
             if provision_type == 'file':
                 source = pro.get('source')
                 destination = pro.get('destination')
@@ -798,7 +802,7 @@ def provision(instance, show=False):
                                         "destination:{}".format(instance.name, provision_type,
                                                                 source, destination)))
                 else:
-                    results = provision_file(vmrun, instance, source, destination)
+                    results = provision_file(vmrun, instance, source, destination, template, template_args)
                     LOGGER.debug('results:%s', results)
                     if results is None:
                         print(colored.red("Not Provisioned"))
@@ -817,7 +821,7 @@ def provision(instance, show=False):
                                         "args:{}".format(instance.name, provision_type,
                                                          inline, path, args)))
                 else:
-                    if provision_shell(vmrun, instance, inline, path, args) is None:
+                    if provision_shell(vmrun, instance, inline, path, args, template, template_args) is None:
                         print(colored.red("Not Provisioned"))
                         return
                 provisioned += 1
@@ -832,7 +836,7 @@ def provision(instance, show=False):
         print(colored.blue("Nothing to provision"))
 
 
-def provision_file(vmrun, instance, source, destination):
+def provision_file(vmrun, instance, source, destination, template=False, template_args={}):
     """Provision from file.
 
     Args:
@@ -845,12 +849,17 @@ def provision_file(vmrun, instance, source, destination):
 
     """
     print(colored.blue("Copying ({}) to ({})".format(source, destination)))
-    if instance.use_psk:
-        results = scp(instance, source, destination, True)
+    if template:
+        with open(source) as fh:
+            inline = fh.read()
+            results = upload_inline(vmrun, instance, inline, destination, template, template_args)
+            return results
     else:
-        results = vmrun.copy_file_from_host_to_guest(source, destination)
-    return results
-
+        if instance.use_psk:
+            results = scp(instance, source, destination, True)
+        else:
+            results = vmrun.copy_file_from_host_to_guest(source, destination)
+        return results
 
 def create_tempfile_in_guest(instance):
     """Create a tempfile in the guest."""
@@ -859,7 +868,7 @@ def create_tempfile_in_guest(instance):
     return stdout
 
 
-def provision_shell(vmrun, instance, inline, script_path, args=None):
+def provision_shell(vmrun, instance, inline, script_path, args=None, template=False, template_args={}):
     """Provision from shell.
 
     Args:
@@ -884,16 +893,22 @@ def provision_shell(vmrun, instance, inline, script_path, args=None):
 
     try:
         if script_path and os.path.isfile(script_path):
-            print(colored.blue("Configuring script {}...".format(script_path)))
-            if instance.use_psk:
-                results = scp(instance, script_path, tmp_path, True)
-                if results is None:
-                    print(colored.red("Warning: Could not copy file to guest."))
-                    return
+            if template:
+                with open(script_path) as fh:
+                    inline = fh.read()
+                    upload_inline(vmrun, instance, inline, tmp_path, template, template_args)
             else:
-                if vmrun.copy_file_from_host_to_guest(script_path, tmp_path) is None:
-                    print(colored.red("Warning: Could not copy file to guest."))
-                    return
+           
+                print(colored.blue("Configuring script {}...".format(script_path)))
+                if instance.use_psk:
+                    results = scp(instance, script_path, tmp_path, True)
+                    if results is None:
+                        print(colored.red("Warning: Could not copy file to guest."))
+                        return
+                else:
+                    if vmrun.copy_file_from_host_to_guest(script_path, tmp_path) is None:
+                        print(colored.red("Warning: Could not copy file to guest."))
+                        return
         else:
             if script_path:
                 if any(script_path.startswith(s) for s in ('https://', 'http://', 'ftp://')):
@@ -915,17 +930,7 @@ def provision_shell(vmrun, instance, inline, script_path, args=None):
                 return
 
             print(colored.blue("Configuring script to run inline..."))
-            the_file = tempfile.NamedTemporaryFile(delete=False)
-            try:
-                the_file.write(str.encode(inline))
-                the_file.close()
-                if instance.use_psk:
-                    scp(instance, the_file.name, tmp_path, True)
-                else:
-                    if vmrun.copy_file_from_host_to_guest(the_file.name, tmp_path) is None:
-                        return
-            finally:
-                os.unlink(the_file.name)
+            upload_inline(vmrun, instance, inline, tmp_path, template, template_args)
 
         print(colored.blue("Configuring environment..."))
         make_executable = "chmod +x '{}'".format(tmp_path)
@@ -1024,6 +1029,23 @@ def get_win32_executable():
         reg.Close()
     return get_fallback_executable()
 
+def upload_inline(vmrun, instance, inline, path, template=False, template_args={}):
+    if template:
+        jinja_template = jinja2.Template(inline)
+        inline = jinja_template.render(template_args, name=instance.name)
+
+    the_file = tempfile.NamedTemporaryFile(delete=False)
+    try:
+        the_file.write(str.encode(inline))
+        the_file.close()
+        if instance.use_psk:
+            results = scp(instance, the_file.name, path, True)
+        else:
+            results = vmrun.copy_file_from_host_to_guest(the_file.name, path)
+    finally:
+        os.unlink(the_file.name)
+
+    return results
 
 def get_provider(vmrun_executable):
     """

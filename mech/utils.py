@@ -452,7 +452,7 @@ def tar_cmd(*args, **kwargs):
 
 
 def init_box(name, box=None, box_version=None, location=None, force=False, save=True,
-             instance_path=None, numvcpus=None, add_custom_interface=False, memsize=None, no_nat=False, provider=None,
+             instance_path=None, numvcpus=None, add_custom_interface=None, memsize=None, no_nat=False, provider=None,
              windows=None):
     """Initialize the box. This includes uncompressing the files
        from the box file and updating the vmx file with

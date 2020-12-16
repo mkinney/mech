@@ -117,7 +117,7 @@ Options:
   --no-cache                    Do not save the downloaded box.
   --no-nat                      Do not use NAT networking (i.e., use bridged).
   --numvcpus VCPUS              Specify number of vcpus.
-  --add-custom-interface VMNET  Add a custom netowrk interface (i.e., VMnet3)
+  --add-custom-interface VMNET  Add a custom netowrk interface (i.e., 3 for VMnet3)
   -r, --remove-vagrant          Remove vagrant user.
   -h, --help                    Show this message and exit.
 ```

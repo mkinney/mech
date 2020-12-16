@@ -240,7 +240,7 @@ def parse_vmx(path):
     return vmx
 
 
-def update_vmx(path, numvcpus=None, memsize=None, no_nat=False):
+def update_vmx(path, numvcpus=None, memsize=None, no_nat=False, add_custom_interface=None):
     """Update the virtual machine configuration (.vmx)
        file with desired settings.
     """
@@ -276,6 +276,16 @@ def update_vmx(path, numvcpus=None, memsize=None, no_nat=False):
 
     if memsize is not None:
         vmx["memsize"] = '"{}"'.format(memsize)
+        updated = True
+
+    if add_custom_interface is not None:
+        vmx["ethernet1.connectionType"] = "custom"
+        vmx["ethernet1.addressType"] = "generated"
+        vmx["ethernet1.vnet"] = "VMnet" + '{}'.format(add_custom_interface)
+        vmx["ethernet1.displayname"] = "VMnet" + '{}'.format(add_custom_interface)
+        vmx["ethernet1.virtualDev"] = "e1000e"
+        vmx["ethernet1.present"] = "TRUE"
+        click.secho("Added custom network interface to vmx file", fg="yellow")
         updated = True
 
     if updated:
@@ -442,7 +452,7 @@ def tar_cmd(*args, **kwargs):
 
 
 def init_box(name, box=None, box_version=None, location=None, force=False, save=True,
-             instance_path=None, numvcpus=None, memsize=None, no_nat=False, provider=None,
+             instance_path=None, numvcpus=None, add_custom_interface=False, memsize=None, no_nat=False, provider=None,
              windows=None):
     """Initialize the box. This includes uncompressing the files
        from the box file and updating the vmx file with
@@ -515,7 +525,7 @@ def init_box(name, box=None, box_version=None, location=None, force=False, save=
         vmx_path = locate(instance_path, '*.vmx')
         if not vmx_path:
             sys.exit(click.style("Cannot locate a VMX file", fg="red"))
-        update_vmx(vmx_path, numvcpus=numvcpus, memsize=memsize, no_nat=no_nat)
+        update_vmx(vmx_path, numvcpus=numvcpus, memsize=memsize, no_nat=no_nat, add_custom_interface=add_custom_interface)
         return vmx_path
     else:
         ovf_path = locate(instance_path, '*.ovf')

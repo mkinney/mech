@@ -734,7 +734,7 @@ def global_status(ctx, purge):
 @click.option('--no-nat', is_flag=True, default=False,
               help='Do not use NAT networking (i.e., use bridged).')
 @click.option('--numvcpus', metavar='VCPUS', help='Specify number of vcpus.')
-@click.option('--add-custom-interface', metavar='VMNET', help='Add a custom network interface (e.g. VMnet3)')
+@click.option('--add-custom-interface', metavar='VMNET', help='Add a custom netowrk interface (i.e., 3 for VMnet3)')
 @click.option('-r', '--remove-vagrant', is_flag=True, default=False, help='Remove vagrant user.')
 @click.pass_context
 def up(ctx, instance, disable_provisioning, disable_shared_folders, gui, memsize, no_cache,

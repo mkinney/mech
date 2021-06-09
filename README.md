@@ -4,6 +4,12 @@
 [![codecov](https://codecov.io/gh/mkinney/mech/branch/master/graph/badge.svg)](https://codecov.io/gh/mkinney/mech)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/mikemech)
 
+NOTE: The Hashicorp VMware vagrant provider is now open source. See https://github.com/hashicorp/vagrant-vmware-desktop 
+
+# Update 2021-06-09 - I'm not sure there will be a need for this tool any longer due to vagrant being free.
+
+Feel free to fork this project.
+
 Please test and provide any feedback/issues.
 
 *Newly added virtualbox functionality.* By default, the provider will be `vmware`. Tested on Ubuntu (using VMware Workstation and VirtualBox) and Mac (using VirtualBox and VMware Fusion).

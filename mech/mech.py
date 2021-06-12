@@ -734,10 +734,11 @@ def global_status(ctx, purge):
 @click.option('--no-nat', is_flag=True, default=False,
               help='Do not use NAT networking (i.e., use bridged).')
 @click.option('--numvcpus', metavar='VCPUS', help='Specify number of vcpus.')
+@click.option('--add-custom-interface', metavar='VMNET', help='Add a custom netowrk interface (i.e., 3 for VMnet3)')
 @click.option('-r', '--remove-vagrant', is_flag=True, default=False, help='Remove vagrant user.')
 @click.pass_context
 def up(ctx, instance, disable_provisioning, disable_shared_folders, gui, memsize, no_cache,
-       no_nat, numvcpus, remove_vagrant):
+       no_nat, numvcpus, add_custom_interface, remove_vagrant):
     '''
     Starts and provisions instance(s).
 
@@ -745,7 +746,7 @@ def up(ctx, instance, disable_provisioning, disable_shared_folders, gui, memsize
 
     If no instance is specified, all instances will be started.
 
-    The options ('memsize', 'numvcpus', and 'no-nat') will only be applied
+    The options ('memsize', 'numvcpus', 'add-custom-interface', and 'no-nat') will only be applied
     upon first run of the 'up' command.
 
     The 'no-nat' option will only be applied if there is no network
@@ -768,7 +769,7 @@ def up(ctx, instance, disable_provisioning, disable_shared_folders, gui, memsize
     LOGGER.debug('cloud_name:%s instance:%s disable_provisioning:%s disable_shared_folders:%s '
                  'gui:%s memsize:%s no_cache:%s no_nat:%s numvcpus:%s remove_vagrant:%s',
                  cloud_name, instance, disable_provisioning, disable_shared_folders,
-                 gui, memsize, no_cache, no_nat, numvcpus, remove_vagrant)
+                 gui, memsize, no_cache, no_nat, numvcpus, add_custom_interface, remove_vagrant)
 
     if cloud_name:
         utils.cloud_run(cloud_name, ['up', 'start'])
@@ -808,6 +809,7 @@ def up(ctx, instance, disable_provisioning, disable_shared_folders, gui, memsize
                 instance_path=inst.path,
                 save=not no_cache,
                 numvcpus=numvcpus,
+                add_custom_interface = add_custom_interface,
                 memsize=memsize,
                 no_nat=no_nat,
                 windows=inst.windows,

@@ -97,7 +97,7 @@ Usage: mech up [OPTIONS] [INSTANCE]
 
   If no instance is specified, all instances will be started.
 
-  The options ('memsize', 'numvcpus', and 'no-nat') will only be applied
+  The options ('memsize', 'numvcpus', add-custom-interface, and 'no-nat') will only be applied
   upon first run of the 'up' command.
 
   The 'no-nat' option will only be applied if there is no network interface
@@ -116,15 +116,16 @@ Usage: mech up [OPTIONS] [INSTANCE]
   root cannot ssh, or change the root password.
 
 Options:
-  --disable-provisioning    Do not provision.
-  --disable-shared-folders  Do not share folders.
-  --gui                     Start GUI, otherwise starts headless.
-  --memsize MEMORY          Specify memory size in MB.
-  --no-cache                Do not save the downloaded box.
-  --no-nat                  Do not use NAT networking (i.e., use bridged).
-  --numvcpus VCPUS          Specify number of vcpus.
-  -r, --remove-vagrant      Remove vagrant user.
-  -h, --help                Show this message and exit.
+  --disable-provisioning        Do not provision.
+  --disable-shared-folders      Do not share folders.
+  --gui                         Start GUI, otherwise starts headless.
+  --memsize MEMORY              Specify memory size in MB.
+  --no-cache                    Do not save the downloaded box.
+  --no-nat                      Do not use NAT networking (i.e., use bridged).
+  --numvcpus VCPUS              Specify number of vcpus.
+  --add-custom-interface VMNET  Add a custom netowrk interface (i.e., 3 for VMnet3)
+  -r, --remove-vagrant          Remove vagrant user.
+  -h, --help                    Show this message and exit.
 ```
 
 # Example using mech
